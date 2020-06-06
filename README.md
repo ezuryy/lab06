@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/ezuryy/lab05.svg?branch=master)](https://travis-ci.com/ezuryy/lab05)
 ## Laboratory work V
 
 <a href="https://yandex.ru/efir/?stream_id=vQw_LH0UfN6I"><img src="https://raw.githubusercontent.com/tp-labs/lab05/master/preview.png" width="640"/></a>
