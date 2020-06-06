@@ -1,30 +1,25 @@
-[![Build Status](https://travis-ci.com/ezuryy/lab04.svg?branch=master)](https://travis-ci.com/ezuryy/lab04)
-## Laboratory work IV
+## Laboratory work V
 
-<a href="https://yandex.ru/efir/?stream_id=vCgeA9EiySzw"><img src="https://raw.githubusercontent.com/tp-labs/lab04/master/preview.png" width="640"/></a>
+<a href="https://yandex.ru/efir/?stream_id=vQw_LH0UfN6I"><img src="https://raw.githubusercontent.com/tp-labs/lab05/master/preview.png" width="640"/></a>
 
-Данная лабораторная работа посвещена изучению систем непрерывной интеграции на примере сервиса **Travis CI**
+Данная лабораторная работа посвещена изучению фреймворков для тестирования на примере **GTest**
 
 ```sh
-$ open https://travis-ci.org
+$ open https://github.com/google/googletest
 ```
 
 ## Tasks
 
-- [ ] 1. Авторизоваться на сервисе **Travis CI** с использованием **GitHub** аккаунта
-- [ ] 2. Создать публичный репозиторий с названием **lab04** на сервисе **GitHub**
+- [ ] 1. Создать публичный репозиторий с названием **lab05** на сервисе **GitHub**
+- [ ] 2. Выполнить инструкцию учебного материала
 - [ ] 3. Ознакомиться со ссылками учебного материала
-- [ ] 4. Включить интеграцию сервиса **Travis CI** с созданным репозиторием
-- [ ] 5. Получить токен для **Travis CLI** с правами **repo** и **user**
-- [ ] 6. Получить фрагмент вставки значка сервиса **Travis CI** в формате **Markdown**
-- [ ] 7. Выполнить инструкцию учебного материала
-- [ ] 8. Составить отчет и отправить ссылку личным сообщением в **Slack**
+- [ ] 4. Составить отчет и отправить ссылку личным сообщением в **Slack**
 
 ## Tutorial
 
 ```sh
 $ export GITHUB_USERNAME=<имя_пользователя>
-$ export GITHUB_TOKEN=<полученный_токен>
+$ alias gsed=sed # for *-nix system
 ```
 
 ```sh
@@ -34,87 +29,110 @@ $ source scripts/activate
 ```
 
 ```sh
-$ \curl -sSL https://get.rvm.io | bash -s -- --ignore-dotfiles
-$ echo "source $HOME/.rvm/scripts/rvm" >> scripts/activate
-$ . scripts/activate
-$ rvm autolibs disable
-$ rvm install ruby-2.4.2
-$ rvm use 2.4.2 --default
-$ gem install travis
-```
-
-```sh
-$ git clone https://github.com/${GITHUB_USERNAME}/lab03 projects/lab04
-$ cd projects/lab04
+$ git clone https://github.com/${GITHUB_USERNAME}/lab04 projects/lab05
+$ cd projects/lab05
 $ git remote remove origin
-$ git remote add origin https://github.com/${GITHUB_USERNAME}/lab04
+$ git remote add origin https://github.com/${GITHUB_USERNAME}/lab05
 ```
 
 ```sh
-$ cat > .travis.yml <<EOF
-language: cpp
+$ mkdir third-party
+$ git submodule add https://github.com/google/googletest third-party/gtest
+$ cd third-party/gtest && git checkout release-1.8.1 && cd ../..
+$ git add third-party/gtest
+$ git commit -m"added gtest framework"
+```
+
+```sh
+$ gsed -i '/option(BUILD_EXAMPLES "Build examples" OFF)/a\
+option(BUILD_TESTS "Build tests" OFF)
+' CMakeLists.txt
+$ cat >> CMakeLists.txt <<EOF
+
+if(BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(third-party/gtest)
+  file(GLOB \${PROJECT_NAME}_TEST_SOURCES tests/*.cpp)
+  add_executable(check \${\${PROJECT_NAME}_TEST_SOURCES})
+  target_link_libraries(check \${PROJECT_NAME} gtest_main)
+  add_test(NAME check COMMAND check)
+endif()
 EOF
 ```
 
 ```sh
-$ cat >> .travis.yml <<EOF
+$ mkdir tests
+$ cat > tests/test1.cpp <<EOF
+#include <print.hpp>
 
-script:
-- cmake -H. -B_build -DCMAKE_INSTALL_PREFIX=_install
-- cmake --build _build
-- cmake --build _build --target install
+#include <gtest/gtest.h>
+
+TEST(Print, InFileStream)
+{
+  std::string filepath = "file.txt";
+  std::string text = "hello";
+  std::ofstream out{filepath};
+
+  print(text, out);
+  out.close();
+
+  std::string result;
+  std::ifstream in{filepath};
+  in >> result;
+
+  EXPECT_EQ(result, text);
+}
 EOF
 ```
 
 ```sh
-$ cat >> .travis.yml <<EOF
-
-addons:
-  apt:
-    sources:
-      - george-edison55-precise-backports
-    packages:
-      - cmake
-      - cmake-data
-EOF
+$ cmake -H. -B_build -DBUILD_TESTS=ON
+$ cmake --build _build
+$ cmake --build _build --target test
 ```
 
 ```sh
-$ travis login --github-token ${GITHUB_TOKEN}
+$ _build/check
+$ cmake --build _build --target test -- ARGS=--verbose
+```
+
+```sh
+$ gsed -i 's/lab04/lab05/g' README.md
+$ gsed -i 's/\(DCMAKE_INSTALL_PREFIX=_install\)/\1 -DBUILD_TESTS=ON/' .travis.yml
+$ gsed -i '/cmake --build _build --target install/a\
+- cmake --build _build --target test -- ARGS=--verbose
+' .travis.yml
 ```
 
 ```sh
 $ travis lint
-```
-
-```sh
-$ ex -sc '1i|<фрагмент_вставки_значка>' -cx README.md
 ```
 
 ```sh
 $ git add .travis.yml
-$ git add README.md
-$ git commit -m"added CI"
+$ git add tests
+$ git add -p
+$ git commit -m"added tests"
 $ git push origin master
 ```
 
 ```sh
-$ travis lint
-$ travis accounts
-$ travis sync
-$ travis repos
+$ travis login --auto
 $ travis enable
-$ travis whatsup
-$ travis branches
-$ travis history
-$ travis show
+```
+
+```sh
+$ mkdir artifacts
+$ sleep 20s && gnome-screenshot --file artifacts/screenshot.png
+# for macOS: $ screencapture -T 20 artifacts/screenshot.png
+# open https://github.com/${GITHUB_USERNAME}/lab05
 ```
 
 ## Report
 
 ```sh
 $ popd
-$ export LAB_NUMBER=04
+$ export LAB_NUMBER=05
 $ git clone https://github.com/tp-labs/lab${LAB_NUMBER} tasks/lab${LAB_NUMBER}
 $ mkdir reports/lab${LAB_NUMBER}
 $ cp tasks/lab${LAB_NUMBER}/README.md reports/lab${LAB_NUMBER}/REPORT.md
@@ -125,20 +143,21 @@ $ gist REPORT.md
 
 ## Homework
 
-Вы продолжаете проходить стажировку в "Formatter Inc." (см [подробности](https://github.com/tp-labs/lab03#Homework)).
-
-В прошлый раз ваше задание заключалось в настройке автоматизированной системы **CMake**.
-
-Сейчас вам требуется настроить систему непрерывной интеграции для библиотек и приложений, с которыми вы работали в [прошлый раз](https://github.com/tp-labs/lab03#Homework). Настройте сборочные процедуры на различных платформах:
-* используйте [TravisCI](https://travis-ci.com/) для сборки на операционной системе **Linux** с использованием компиляторов **gcc** и **clang**;
-* используйте [AppVeyor](https://www.appveyor.com/) для сборки на операционной системе **Windows**.
+### Задание
+1. Создайте `CMakeList.txt` для библиотеки *banking*.
+2. Создайте модульные тесты на классы `Transaction` и `Account`.
+    * Используйте mock-объекты.
+    * Покрытие кода должно составлять 100%.
+3. Настройте сборочную процедуру на **TravisCI**.
+4. Настройте [Coveralls.io](https://coveralls.io/).
 
 ## Links
 
-- [Travis Client](https://github.com/travis-ci/travis.rb)
-- [AppVeyour](https://www.appveyor.com/)
-- [GitLab CI](https://about.gitlab.com/gitlab-ci/)
+- [C++ CI: Travis, CMake, GTest, Coveralls & Appveyor](http://david-grs.github.io/cpp-clang-travis-cmake-gtest-coveralls-appveyor/)
+- [Boost.Tests](http://www.boost.org/doc/libs/1_63_0/libs/test/doc/html/)
+- [Catch](https://github.com/catchorg/Catch2)
 
 ```
 Copyright (c) 2015-2020 The ISC Authors
 ```
+
