@@ -1,5 +1,4 @@
-[![Build Status](https://travis-ci.com/ezuryy/lab06.svg?branch=master)](https://travis-ci.com/ezuryy/lab06)
-## Laboratory work V
+## Laboratory work VI
 
 <a href="https://yandex.ru/efir/?stream_id=vQw_LH0UfN6I"><img src="https://raw.githubusercontent.com/tp-labs/lab06/master/preview.png" width="640"/></a>
 
